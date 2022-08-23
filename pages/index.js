@@ -1,8 +1,11 @@
 import Head from 'next/head'
 import {Container, Card, Row, Text} from '@nextui-org/react'
 import { Header } from '../components/Header'
+import fs from 'fs/promises'
+import Link from 'next/link'
+import Image from 'next/image'
 
-export default function Home() {
+export default function Home({latestComics}) {
   return (
     <div>
       <Head>
@@ -11,21 +14,46 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <Header />
-      <main>
-      <Container>
-        <Card css={{ $$cardColor: '$colors$primary' }}>
-          <Card.Body>
-            <Row justify="center" align="center">
-              <Text h6 size={15} color="white" css={{ m: 0 }}>
-                NextUI gives you the best developer experience with all the features
-                you need for building beautiful and modern websites and
-                applications.
-              </Text>
-            </Row>
-          </Card.Body>
-        </Card>
-      </Container>
+      <main className='p-4 max-w-7xl m-auto'>
+        <h2 className='text-3xl font-bold text-center mb-10'>Lates Comics</h2>
+        <section className='grid grid-cols-1 gap-2 m-auto sm:grid-cols2 md:grid-cols-3'>
+          {
+            latestComics.map(comic => (
+              <Link href={`/comic/${comic.id}`} key={comic.id}>
+                <a className='m-auto mb-4 pb-4'>
+                  <h3 className='mb-5 text-center font-semibold'>{comic.title}</h3>
+                  <Image
+                    src={comic.img} 
+                    alt={comic.alt}
+                    width={comic.width}
+                    height={comic.height}
+                  />
+                </a>
+              </Link>
+            ))
+          }
+        </section>
       </main>
     </div>
   )
+}
+
+export async function getStaticProps(context){
+
+  const files = await fs.readdir('./comics')
+  const lastestComics = files.slice(-8, files.length)
+
+  const promisesReadFiles = lastestComics.map(async(file)=>{
+    console.log(file)
+    const content = await fs.readFile(`./comics/${file}`, 'utf8')
+    return JSON.parse(content)
+  })
+
+  const latestComics = await Promise.all(promisesReadFiles)
+
+  return{
+    props:{
+      latestComics
+    }
+  }
 }
